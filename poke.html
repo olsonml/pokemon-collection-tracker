@@ -376,7 +376,7 @@
         <div class="header">
             <h1>🎯 Pokemon Collection Tracker</h1>
             <p>Track inventory, sales & profits</p>
-            <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">v1.1</div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">v1.2</div>
             <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
         </div>
 
@@ -1389,12 +1389,13 @@
                 searchInfo += '<div style="font-size: 11px; color: #dc2626; margin-top: 5px;">No matches found on Pricecharting</div>' +
                     '</div>';
             } else {
-                // Fallback - show basic query
-                const basicQuery = `${item.name} ${item.set || ''}`.trim();
+                // Fallback - show query based on category
+                const searchQueries = generateSearchQueries(item.name, item.set, item.category);
+                const basicQuery = searchQueries.length > 0 ? searchQueries[0] : item.name;
                 searchInfo = '<div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">' +
                     '<div style="font-size: 12px; color: #6b7280; margin-bottom: 5px;">🔍 Search Query Used:</div>' +
                     '<div style="font-family: monospace; color: #1f2937; font-weight: 600;">"' + basicQuery + '"</div>' +
-                    '<div style="font-size: 11px; color: #6b7280; margin-top: 5px;">Basic search query</div>' +
+                    '<div style="font-size: 11px; color: #6b7280; margin-top: 5px;">Generated from category</div>' +
                     '</div>';
             }
             
