@@ -678,66 +678,33 @@
             toggleCategoryFields();
         }
 
-        // Generate optimized search queries for Pricecharting
+        // Generate search queries for Pricecharting
         function generateSearchQueries(cardName, setName, category) {
             const queries = [];
             
-            // Clean up common terms that might interfere
+            // Clean up the product name
             const cleanName = cardName
                 .replace(/\s+/g, ' ')  // Multiple spaces to single
                 .replace(/[^\w\s-]/g, '')  // Remove special chars except hyphens
                 .trim();
             
-            const cleanSet = setName ? setName
-                .replace(/\s+/g, ' ')
-                .replace(/[^\w\s-]/g, '')
-                .trim() : '';
+            if (!cleanName) return queries;
             
-            if (category === 'single-card') {
-                // For single cards, try multiple variations
-                if (cleanSet) {
-                    queries.push(`${cleanName} ${cleanSet}`);  // Full name + set
-                    queries.push(`${cleanName} (${cleanSet})`);  // Name (Set)
-                    queries.push(`${cleanSet} ${cleanName}`);  // Set first
-                }
-                queries.push(cleanName);  // Name only as fallback
-                
-                // Try without common suffixes that might not be on Pricecharting
-                const withoutSuffixes = cleanName
-                    .replace(/\s+(VMAX|VSTAR|V|GX|EX|Prime|Legend|Break)$/i, '')
-                    .trim();
-                if (withoutSuffixes !== cleanName && withoutSuffixes) {
-                    queries.push(withoutSuffixes + (cleanSet ? ` ${cleanSet}` : ''));
-                }
+            // Simple approach: product name + category (unless category is "other" or "single-card")
+            if (category === 'other' || category === 'single-card') {
+                queries.push(cleanName);
             } else {
-                // For sealed products, be more specific
-                if (category === 'booster-pack') {
-                    if (cleanSet) {
-                        queries.push(`${cleanSet} Booster Pack`);
-                        queries.push(`${cleanSet} Pack`);
-                        queries.push(`Pokemon ${cleanSet} Booster Pack`);
-                    }
-                    queries.push(`${cleanName} Booster Pack`);
-                } else if (category === 'booster-box') {
-                    if (cleanSet) {
-                        queries.push(`${cleanSet} Booster Box`);
-                        queries.push(`Pokemon ${cleanSet} Booster Box`);
-                    }
-                    queries.push(`${cleanName} Booster Box`);
-                } else if (category === 'elite-trainer-box') {
-                    if (cleanSet) {
-                        queries.push(`${cleanSet} Elite Trainer Box`);
-                        queries.push(`${cleanSet} ETB`);
-                        queries.push(`Pokemon ${cleanSet} Elite Trainer Box`);
-                    }
-                    queries.push(`${cleanName} Elite Trainer Box`);
-                } else {
-                    // Generic fallback
-                    if (cleanSet) {
-                        queries.push(`${cleanName} ${cleanSet}`);
-                    }
-                    queries.push(cleanName);
-                }
+                // Convert category to readable format
+                const categoryMap = {
+                    'booster-pack': 'Booster Pack', 
+                    'booster-box': 'Booster Box',
+                    'elite-trainer-box': 'Elite Trainer Box',
+                    'theme-deck': 'Theme Deck',
+                    'promo': 'Promo'
+                };
+                
+                const categoryText = categoryMap[category] || category;
+                queries.push(`${cleanName} ${categoryText}`);
             }
             
             // Remove duplicates and empty queries
