@@ -677,9 +677,75 @@
             toggleCategoryFields();
         }
 
+        // Generate optimized search queries for Pricecharting
+        function generateSearchQueries(cardName, setName, category) {
+            const queries = [];
+            
+            // Clean up common terms that might interfere
+            const cleanName = cardName
+                .replace(/\s+/g, ' ')  // Multiple spaces to single
+                .replace(/[^\w\s-]/g, '')  // Remove special chars except hyphens
+                .trim();
+            
+            const cleanSet = setName ? setName
+                .replace(/\s+/g, ' ')
+                .replace(/[^\w\s-]/g, '')
+                .trim() : '';
+            
+            if (category === 'single-card') {
+                // For single cards, try multiple variations
+                if (cleanSet) {
+                    queries.push(`${cleanName} ${cleanSet}`);  // Full name + set
+                    queries.push(`${cleanName} (${cleanSet})`);  // Name (Set)
+                    queries.push(`${cleanSet} ${cleanName}`);  // Set first
+                }
+                queries.push(cleanName);  // Name only as fallback
+                
+                // Try without common suffixes that might not be on Pricecharting
+                const withoutSuffixes = cleanName
+                    .replace(/\s+(VMAX|VSTAR|V|GX|EX|Prime|Legend|Break)$/i, '')
+                    .trim();
+                if (withoutSuffixes !== cleanName && withoutSuffixes) {
+                    queries.push(withoutSuffixes + (cleanSet ? ` ${cleanSet}` : ''));
+                }
+            } else {
+                // For sealed products, be more specific
+                if (category === 'booster-pack') {
+                    if (cleanSet) {
+                        queries.push(`${cleanSet} Booster Pack`);
+                        queries.push(`${cleanSet} Pack`);
+                        queries.push(`Pokemon ${cleanSet} Booster Pack`);
+                    }
+                    queries.push(`${cleanName} Booster Pack`);
+                } else if (category === 'booster-box') {
+                    if (cleanSet) {
+                        queries.push(`${cleanSet} Booster Box`);
+                        queries.push(`Pokemon ${cleanSet} Booster Box`);
+                    }
+                    queries.push(`${cleanName} Booster Box`);
+                } else if (category === 'elite-trainer-box') {
+                    if (cleanSet) {
+                        queries.push(`${cleanSet} Elite Trainer Box`);
+                        queries.push(`${cleanSet} ETB`);
+                        queries.push(`Pokemon ${cleanSet} Elite Trainer Box`);
+                    }
+                    queries.push(`${cleanName} Elite Trainer Box`);
+                } else {
+                    // Generic fallback
+                    if (cleanSet) {
+                        queries.push(`${cleanName} ${cleanSet}`);
+                    }
+                    queries.push(cleanName);
+                }
+            }
+            
+            // Remove duplicates and empty queries
+            return [...new Set(queries)].filter(q => q && q.trim());
+        }
+
         // Pricecharting integration functions
-        async function fetchPricechartingData(cardName, setName) {
-            const cacheKey = `${cardName}-${setName}`.toLowerCase();
+        async function fetchPricechartingData(cardName, setName, category = 'single-card') {
+            const cacheKey = `${cardName}-${setName}-${category}`.toLowerCase();
             
             // Check cache first
             if (app.priceCache.has(cacheKey)) {
@@ -713,6 +779,9 @@
                 return fallbackData;
             }
 
+            // Generate multiple search queries to try
+            const searchQueries = generateSearchQueries(cardName, setName, category);
+            
             // Try multiple CORS proxy services
             const proxies = [
                 'https://api.allorigins.win/get?url=',
@@ -720,80 +789,88 @@
                 'https://api.codetabs.com/v1/proxy?quest='
             ];
 
-            for (let proxyIndex = 0; proxyIndex < proxies.length; proxyIndex++) {
-                try {
-                    // Create search query
-                    const searchQuery = `${cardName} ${setName}`.trim();
-                    const proxyUrl = proxies[proxyIndex];
-                    const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(searchQuery)}&type=prices`;
-                    
-                    let fetchUrl;
-                    if (proxyUrl.includes('allorigins')) {
-                        fetchUrl = proxyUrl + encodeURIComponent(pricechartingUrl);
-                    } else {
-                        fetchUrl = proxyUrl + pricechartingUrl;
-                    }
-                    
-                    // Set a reasonable timeout
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-                    
-                    const response = await fetch(fetchUrl, { 
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/json',
-                            'User-Agent': 'Pokemon Collection Tracker'
-                        },
-                        mode: 'cors'
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Handle different proxy response formats
-                    let htmlContent;
-                    if (data.contents) {
-                        // allorigins format
-                        if (data.status && data.status.http_code && data.status.http_code !== 200) {
-                            throw new Error(`Pricecharting returned ${data.status.http_code}`);
+            // Try each search query with each proxy
+            for (let queryIndex = 0; queryIndex < searchQueries.length; queryIndex++) {
+                const searchQuery = searchQueries[queryIndex];
+                console.log(`Trying search query ${queryIndex + 1}/${searchQueries.length}: "${searchQuery}"`);
+                
+                for (let proxyIndex = 0; proxyIndex < proxies.length; proxyIndex++) {
+                    try {
+                        const proxyUrl = proxies[proxyIndex];
+                        const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(searchQuery)}&type=prices`;
+                        
+                        let fetchUrl;
+                        if (proxyUrl.includes('allorigins')) {
+                            fetchUrl = proxyUrl + encodeURIComponent(pricechartingUrl);
+                        } else {
+                            fetchUrl = proxyUrl + pricechartingUrl;
                         }
-                        htmlContent = data.contents;
-                    } else if (typeof data === 'string') {
-                        // Direct HTML response
-                        htmlContent = data;
-                    } else {
-                        throw new Error('Unexpected response format');
+                        
+                        // Set a reasonable timeout
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                        
+                        const response = await fetch(fetchUrl, { 
+                            signal: controller.signal,
+                            headers: {
+                                'Accept': 'application/json',
+                                'User-Agent': 'Pokemon Collection Tracker'
+                            },
+                            mode: 'cors'
+                        });
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        const data = await response.json();
+                        
+                        // Handle different proxy response formats
+                        let htmlContent;
+                        if (data.contents) {
+                            // allorigins format
+                            if (data.status && data.status.http_code && data.status.http_code !== 200) {
+                                throw new Error(`Pricecharting returned ${data.status.http_code}`);
+                            }
+                            htmlContent = data.contents;
+                        } else if (typeof data === 'string') {
+                            // Direct HTML response
+                            htmlContent = data;
+                        } else {
+                            throw new Error('Unexpected response format');
+                        }
+                        
+                        if (!htmlContent || htmlContent.trim() === '') {
+                            throw new Error('Empty response from Pricecharting');
+                        }
+                        
+                        // Parse the HTML to extract price information
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlContent, 'text/html');
+                        
+                        // Extract prices from the HTML structure
+                        const priceData = extractPricesFromHTML(doc, cardName, setName, searchQuery);
+                        
+                        // Check if we found any meaningful data
+                        const hasAnyPrice = Object.values(priceData.prices).some(price => price !== null && price > 0);
+                        if (hasAnyPrice) {
+                            // Success! Cache and return
+                            console.log(`Found prices with query: "${searchQuery}"`);
+                            priceData.successfulQuery = searchQuery;
+                            priceData.allQueriesTried = searchQueries.slice(0, queryIndex + 1);
+                            app.priceCache.set(cacheKey, priceData);
+                            return priceData;
+                        }
+                        
+                        // No prices found with this query, try next query
+                        console.log(`No prices found with query: "${searchQuery}"`);
+                        break; // Move to next query (don't try other proxies for this query)
+                        
+                    } catch (error) {
+                        console.warn(`Proxy ${proxyIndex + 1} failed for "${searchQuery}":`, error.message);
+                        // Continue to next proxy for this query
                     }
-                    
-                    if (!htmlContent || htmlContent.trim() === '') {
-                        throw new Error('Empty response from Pricecharting');
-                    }
-                    
-                    // Parse the HTML to extract price information
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlContent, 'text/html');
-                    
-                    // Extract prices from the HTML structure
-                    const priceData = extractPricesFromHTML(doc, cardName, setName);
-                    
-                    // Check if we found any meaningful data
-                    const hasAnyPrice = Object.values(priceData.prices).some(price => price !== null && price > 0);
-                    if (!hasAnyPrice) {
-                        priceData.error = 'Product not found on Pricecharting';
-                        priceData.notFound = true;
-                    }
-                    
-                    // Cache the result and return success
-                    app.priceCache.set(cacheKey, priceData);
-                    return priceData;
-                    
-                } catch (error) {
-                    console.warn(`Proxy ${proxyIndex + 1} failed for "${cardName} ${setName}":`, error.message);
-                    // Continue to next proxy
                 }
             }
 
@@ -889,7 +966,7 @@
 
         // Get market price for an item
         async function getMarketPrice(item) {
-            const pricingData = await fetchPricechartingData(item.name, item.set);
+            const pricingData = await fetchPricechartingData(item.name, item.set, item.category);
             if (!pricingData) return null;
 
             // For single cards, determine which price to use based on condition
@@ -923,7 +1000,7 @@
         // Add market price to items
         async function addMarketPriceToItem(item) {            
             try {
-                const pricingData = await fetchPricechartingData(item.name, item.set);
+                const pricingData = await fetchPricechartingData(item.name, item.set, item.category);
                 
                 if (pricingData.failed || pricingData.error) {
                     // Handle failed price lookup
@@ -931,7 +1008,8 @@
                         ...item,
                         marketPrice: null,
                         marketPriceError: pricingData.error,
-                        marketPriceUpdated: new Date().toISOString()
+                        marketPriceUpdated: new Date().toISOString(),
+                        queriesTried: pricingData.allQueriesTried || []
                     };
                 }
                 
@@ -940,7 +1018,9 @@
                     ...item,
                     marketPrice: marketPrice,
                     marketPriceError: null, // Clear any previous error
-                    marketPriceUpdated: new Date().toISOString()
+                    marketPriceUpdated: new Date().toISOString(),
+                    successfulQuery: pricingData.successfulQuery,
+                    queriesTried: pricingData.allQueriesTried || []
                 };
             } catch (error) {
                 console.error('Error adding market price:', error);
@@ -1297,7 +1377,7 @@
                 '</div>';
 
             try {
-                const priceData = await fetchPricechartingData(item.name, item.set);
+                const priceData = await fetchPricechartingData(item.name, item.set, item.category);
                 displayMarketPriceData(item, priceData);
             } catch (error) {
                 console.error('Error fetching market price:', error);
@@ -1320,13 +1400,35 @@
         function displayMarketPriceData(item, priceData) {
             const content = document.getElementById('marketPriceContent');
             
-            // Always show the search string used
-            const searchQuery = `${item.name} ${item.set || ''}`.trim();
-            const searchInfo = '<div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">' +
-                '<div style="font-size: 12px; color: #6b7280; margin-bottom: 5px;">🔍 Search Query Used:</div>' +
-                '<div style="font-family: monospace; color: #1f2937; font-weight: 600;">"' + searchQuery + '"</div>' +
-                '<div style="font-size: 11px; color: #6b7280; margin-top: 5px;">This is what we searched for on Pricecharting</div>' +
-                '</div>';
+            // Show search queries tried
+            let searchInfo = '';
+            if (priceData.successfulQuery) {
+                // Show successful query
+                searchInfo = '<div style="background: #f0fdf4; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #10b981;">' +
+                    '<div style="font-size: 12px; color: #166534; margin-bottom: 5px;">✅ Successful Search Query:</div>' +
+                    '<div style="font-family: monospace; color: #1f2937; font-weight: 600;">"' + priceData.successfulQuery + '"</div>' +
+                    (priceData.allQueriesTried && priceData.allQueriesTried.length > 1 ? 
+                        '<div style="font-size: 11px; color: #166534; margin-top: 5px;">Found after trying ' + priceData.allQueriesTried.length + ' variations</div>' : 
+                        '<div style="font-size: 11px; color: #166534; margin-top: 5px;">Found on first try!</div>') +
+                    '</div>';
+            } else if (item.queriesTried && item.queriesTried.length > 0) {
+                // Show failed attempts
+                searchInfo = '<div style="background: #fef2f2; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ef4444;">' +
+                    '<div style="font-size: 12px; color: #dc2626; margin-bottom: 5px;">❌ Search Queries Tried:</div>';
+                item.queriesTried.forEach((query, index) => {
+                    searchInfo += '<div style="font-family: monospace; color: #1f2937; font-size: 11px; margin: 3px 0;">' + (index + 1) + '. "' + query + '"</div>';
+                });
+                searchInfo += '<div style="font-size: 11px; color: #dc2626; margin-top: 5px;">No matches found on Pricecharting</div>' +
+                    '</div>';
+            } else {
+                // Fallback - show basic query
+                const basicQuery = `${item.name} ${item.set || ''}`.trim();
+                searchInfo = '<div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">' +
+                    '<div style="font-size: 12px; color: #6b7280; margin-bottom: 5px;">🔍 Search Query Used:</div>' +
+                    '<div style="font-family: monospace; color: #1f2937; font-weight: 600;">"' + basicQuery + '"</div>' +
+                    '<div style="font-size: 11px; color: #6b7280; margin-top: 5px;">Basic search query</div>' +
+                    '</div>';
+            }
             
             if (priceData.error) {
                 content.innerHTML = searchInfo +
