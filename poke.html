@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Collection Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 25%, #f59e0b 50%, #d97706 75%, #10b981 100%);
+            background-size: 300% 300%;
+            animation: holoShimmer 6s ease-in-out infinite;
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 25%, #374151 50%, #1f2937 75%, #111827 100%);
+        }
+        
+        @keyframes holoShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 50% 100%; }
+            75% { background-position: 50% 0%; }
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark .container {
+            background: rgba(31, 41, 55, 0.95);
+            color: #f9fafb;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            position: relative;
+        }
+        
+        body.dark .header {
+            border-bottom-color: #374151;
+        }
+        
+        .header h1 {
+            color: #1f2937;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        body.dark .header h1 {
+            color: #f9fafb;
+        }
+        
+        .dark-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f3f4f6;
+            border-radius: 10px;
+            padding: 4px;
+        }
+        
+        body.dark .tabs {
+            background: #374151;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: inherit;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #3b82f6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        body.dark .tab.active {
+            background: #1f2937;
+            color: #60a5fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .summary-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        body.dark .summary-card {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        .summary-card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .blue { color: #3b82f6; }
+        .green { color: #10b981; }
+        .orange { color: #f59e0b; }
+        .purple { color: #8b5cf6; }
+        
+        .form {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        body.dark .form {
+            background: #374151;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        body.dark .form-group label {
+            color: #f9fafb;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f9fafb;
+            transition: all 0.2s;
+        }
+        
+        body.dark .form-group input,
+        body.dark .form-group select,
+        body.dark .form-group textarea {
+            background: #1f2937;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+        
+        body.dark .form-group input:focus,
+        body.dark .form-group select:focus,
+        body.dark .form-group textarea:focus {
+            background: #111827;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-secondary { background: #6b7280; }
+        .btn-success { background: #10b981; }
+        .btn-danger { background: #ef4444; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        
+        .item {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        body.dark .item {
+            background: #374151;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .item-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        body.dark .item-name {
+            color: #f9fafb;
+        }
+        
+        .item-details {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        
+        .item-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .item-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        body.dark .modal-content {
+            background: #374151;
+            color: #f9fafb;
+        }
+        
+        .hidden { display: none !important; }
+        .show { display: block !important; }
+        
+        .conditional-fields {
+            display: none;
+        }
+        
+        .conditional-fields.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .item-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Pokemon Collection Tracker</h1>
+            <p>Track inventory, sales & profits</p>
+            <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">🏠 Dashboard</button>
+            <button class="tab" onclick="showTab('inventory')">📦 Inventory</button>
+            <button class="tab" onclick="showTab('analytics')">📊 Analytics</button>
+            <button class="tab" onclick="showTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div id="summary" class="summary-grid hidden">
+                <div class="summary-card">
+                    <h3>Total Investment</h3>
+                    <div class="value blue" id="totalInvestment">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Sales Revenue</h3>
+                    <div class="value green" id="totalRevenue">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Realized Profit</h3>
+                    <div class="value orange" id="realizedProfit">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Inventory Value</h3>
+                    <div class="value purple" id="inventoryValue">$0.00</div>
+                </div>
+            </div>
+
+            <div class="form">
+                <h3 style="margin-bottom: 20px;">📝 Add New Item</h3>
+                
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" onchange="toggleCategoryFields()">
+                        <option value="single-card">Single Card</option>
+                        <option value="booster-pack">Booster Pack</option>
+                        <option value="booster-box">Booster Box</option>
+                        <option value="elite-trainer-box">Elite Trainer Box</option>
+                        <option value="theme-deck">Theme Deck</option>
+                        <option value="promo">Promo</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="itemName" placeholder="e.g., Charizard VMAX" oninput="updateFormPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Set/Series</label>
+                        <input type="text" id="itemSet" placeholder="e.g., Base Set">
+                    </div>
+                    <div class="form-group conditional-fields show" id="cardNumberField">
+                        <label>Card Number</label>
+                        <input type="text" id="cardNumber" placeholder="e.g., 4/102">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price Each ($)</label>
+                        <input type="number" id="purchasePrice" placeholder="0.00" step="0.01" min="0" oninput="updateFormPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="quantity" placeholder="1" min="1" value="1" oninput="updateFormPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Profit Margin (%)</label>
+                        <input type="number" id="profitMargin" placeholder="20" min="0" value="20" oninput="updateFormPreview()">
+                    </div>
+                </div>
+
+                <div class="form-row conditional-fields show" id="cardSpecificFields">
+                    <div class="form-group">
+                        <label>Rarity</label>
+                        <select id="rarity">
+                            <option value="common">Common</option>
+                            <option value="uncommon">Uncommon</option>
+                            <option value="rare">Rare</option>
+                            <option value="ultra-rare">Ultra Rare</option>
+                            <option value="secret-rare">Secret Rare</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Condition</label>
+                        <select id="condition">
+                            <option value="mint">Mint (M)</option>
+                            <option value="near-mint" selected>Near Mint (NM)</option>
+                            <option value="lightly-played">Lightly Played (LP)</option>
+                            <option value="moderately-played">Moderately Played (MP)</option>
+                            <option value="heavily-played">Heavily Played (HP)</option>
+                            <option value="damaged">Damaged (D)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="notes" placeholder="Additional notes..." rows="2"></textarea>
+                </div>
+
+                <div id="preview" class="summary-card hidden" style="margin: 20px 0;">
+                    <h4>💰 Preview</h4>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span>Total Cost: <strong id="previewCost">$0.00</strong></span>
+                        <span>Sell Each: <strong id="previewSellPrice">$0.00</strong></span>
+                        <span>Total Potential: <strong id="previewTotal">$0.00</strong></span>
+                    </div>
+                </div>
+
+                <button class="btn" id="addBtn" disabled style="font-size: 16px; padding: 15px;" onclick="addItem()">➕ Add to Collection</button>
+            </div>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div id="inventory" class="tab-content">
+            <h3 style="margin-bottom: 20px;">📦 Full Inventory</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="searchInput" placeholder="🔍 Search items..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;" oninput="updateItemsList()">
+            </div>
+            
+            <div style="margin-bottom: 20px; text-align: center;">
+                <button class="btn" id="updatePricesBtn" onclick="updateAllMarketPrices()">📈 Update All Market Prices</button>
+            </div>
+
+            <div id="itemsList">
+                <div class="item" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <h3>No items yet</h3>
+                    <p>Go to Dashboard to add your first Pokemon product!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="analytics" class="tab-content">
+            <h3 style="margin-bottom: 20px;">📊 Business Analytics</h3>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Best Category</h3>
+                    <div class="value green" id="bestCategory">-</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Items</h3>
+                    <div class="value blue" id="totalItems">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Avg Profit Margin</h3>
+                    <div class="value orange" id="avgMargin">0%</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Items Sold</h3>
+                    <div class="value purple" id="itemsSold">0</div>
+                </div>
+            </div>
+
+            <div class="form">
+                <h4 style="margin-bottom: 15px;">📈 Category Breakdown</h4>
+                <div id="categoryBreakdown">
+                    <p style="color: #6b7280; text-align: center; padding: 20px;">Add some items to see analytics</p>
+                </div>
+            </div>
+
+            <div class="form">
+                <h4 style="margin-bottom: 15px;">💰 Top Performers</h4>
+                <div id="topPerformers">
+                    <p style="color: #6b7280; text-align: center; padding: 20px;">Record some sales to see top performers</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="loadDemoData()">🎮 Load Demo Data</button>
+                <button class="btn btn-secondary" onclick="exportData()" style="margin-left: 10px;">📊 Export Data</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="settings" class="tab-content">
+            <h3 style="margin-bottom: 20px;">⚙️ Settings</h3>
+            <div class="form">
+                <h4>Default Settings</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Default Profit Margin (%)</label>
+                        <input type="number" id="defaultMargin" value="20" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency Symbol</label>
+                        <input type="text" id="currencySymbol" value="$" maxlength="3">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn" onclick="saveSettings()">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sale Modal -->
+    <div id="saleModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Record Sale</h3>
+            <div id="saleItemInfo" style="margin: 15px 0; padding: 15px; background: #f3f4f6; border-radius: 8px;"></div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity to Sell</label>
+                    <input type="number" id="sellQuantity" min="1" oninput="updateSalePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Price Each ($)</label>
+                    <input type="number" id="sellPrice" step="0.01" min="0" oninput="updateSalePreview()">
+                </div>
+            </div>
+
+            <div id="salePreview" class="summary-card hidden" style="margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Total Sale: <strong id="saleTotal">$0.00</strong></span>
+                    <span>Profit: <strong id="saleProfit">$0.00</strong></span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeSaleModal()" style="flex: 1;">Cancel</button>
+                <button class="btn btn-success" id="confirmSaleBtn" disabled onclick="recordSale()" style="flex: 1;">Record Sale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Price Modal -->
+    <div id="marketPriceModal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>💰 Market Price</h3>
+                <button onclick="closeMarketPriceModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            
+            <div id="marketPriceContent">
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                    <div>Loading market prices...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Price Entry Modal -->
+    <div id="manualPriceModal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>✏️ Enter Market Price</h3>
+                <button onclick="closeManualPriceModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            
+            <div id="manualPriceItemInfo" style="margin: 15px 0; padding: 15px; background: #f3f4f6; border-radius: 8px;"></div>
+            
+            <div class="form-group">
+                <label>Current Market Price ($)</label>
+                <input type="number" id="manualPrice" step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+            </div>
+
+            <div style="font-size: 12px; color: #6b7280; margin: 10px 0;">
+                💡 Check <a href="#" id="pricechartingLink" target="_blank" style="color: #3b82f6;">Pricecharting</a> or other sources for current market values
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeManualPriceModal()" style="flex: 1;">Cancel</button>
+                <button class="btn btn-success" id="saveManualPriceBtn" onclick="saveManualPrice()" style="flex: 1;">Save Price</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global app state
+        const app = {
+            items: [],
+            selectedItem: null,
+            settings: {
+                defaultMargin: 20,
+                currencySymbol: '$',
+                darkMode: false
+            },
+            priceCache: new Map() // Cache for Pricecharting data
+        };
+
+        // Initialize app
+        function init() {
+            loadData();
+            loadSettings();
+            updateDisplay();
+            applyDarkMode();
+            toggleCategoryFields();
+        }
+
+        // Pricecharting integration functions
+        async function fetchPricechartingData(cardName, setName) {
+            const cacheKey = `${cardName}-${setName}`.toLowerCase();
+            
+            // Check cache first
+            if (app.priceCache.has(cacheKey)) {
+                return app.priceCache.get(cacheKey);
+            }
+
+            // Check if running locally (CORS issues)
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' || 
+                               window.location.protocol === 'file:';
+
+            if (isLocalhost) {
+                // For local development, return a mock structure encouraging manual entry
+                const fallbackData = {
+                    name: cardName,
+                    set: setName,
+                    prices: {
+                        ungraded: null,
+                        grade7: null,
+                        grade8: null,
+                        grade9: null,
+                        grade10: null
+                    },
+                    error: 'Manual entry required (local server)',
+                    lastUpdated: new Date().toISOString(),
+                    url: `https://www.pricecharting.com/search-products?q=${encodeURIComponent(cardName + ' ' + setName)}&type=prices`,
+                    requiresManualEntry: true
+                };
+                
+                app.priceCache.set(cacheKey, fallbackData);
+                return fallbackData;
+            }
+
+            // Try multiple CORS proxy services
+            const proxies = [
+                'https://api.allorigins.win/get?url=',
+                'https://cors-anywhere.herokuapp.com/',
+                'https://api.codetabs.com/v1/proxy?quest='
+            ];
+
+            for (let proxyIndex = 0; proxyIndex < proxies.length; proxyIndex++) {
+                try {
+                    // Create search query
+                    const searchQuery = `${cardName} ${setName}`.trim();
+                    const proxyUrl = proxies[proxyIndex];
+                    const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(searchQuery)}&type=prices`;
+                    
+                    let fetchUrl;
+                    if (proxyUrl.includes('allorigins')) {
+                        fetchUrl = proxyUrl + encodeURIComponent(pricechartingUrl);
+                    } else {
+                        fetchUrl = proxyUrl + pricechartingUrl;
+                    }
+                    
+                    // Set a reasonable timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                    
+                    const response = await fetch(fetchUrl, { 
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json',
+                            'User-Agent': 'Pokemon Collection Tracker'
+                        },
+                        mode: 'cors'
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Handle different proxy response formats
+                    let htmlContent;
+                    if (data.contents) {
+                        // allorigins format
+                        if (data.status && data.status.http_code && data.status.http_code !== 200) {
+                            throw new Error(`Pricecharting returned ${data.status.http_code}`);
+                        }
+                        htmlContent = data.contents;
+                    } else if (typeof data === 'string') {
+                        // Direct HTML response
+                        htmlContent = data;
+                    } else {
+                        throw new Error('Unexpected response format');
+                    }
+                    
+                    if (!htmlContent || htmlContent.trim() === '') {
+                        throw new Error('Empty response from Pricecharting');
+                    }
+                    
+                    // Parse the HTML to extract price information
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlContent, 'text/html');
+                    
+                    // Extract prices from the HTML structure
+                    const priceData = extractPricesFromHTML(doc, cardName, setName);
+                    
+                    // Check if we found any meaningful data
+                    const hasAnyPrice = Object.values(priceData.prices).some(price => price !== null && price > 0);
+                    if (!hasAnyPrice) {
+                        priceData.error = 'Product not found on Pricecharting';
+                        priceData.notFound = true;
+                    }
+                    
+                    // Cache the result and return success
+                    app.priceCache.set(cacheKey, priceData);
+                    return priceData;
+                    
+                } catch (error) {
+                    console.warn(`Proxy ${proxyIndex + 1} failed for "${cardName} ${setName}":`, error.message);
+                    // Continue to next proxy
+                }
+            }
+
+            // All proxies failed
+            console.error(`All proxy services failed for "${cardName} ${setName}"`);
+            
+            const fallbackData = {
+                name: cardName,
+                set: setName,
+                prices: {
+                    ungraded: null,
+                    grade7: null,
+                    grade8: null,
+                    grade9: null,
+                    grade10: null
+                },
+                error: 'Network error - try manual entry',
+                lastUpdated: new Date().toISOString(),
+                url: `https://www.pricecharting.com/search-products?q=${encodeURIComponent(cardName + ' ' + setName)}&type=prices`,
+                failed: true,
+                requiresManualEntry: true
+            };
+            
+            // Cache failed results for 5 minutes to avoid repeated failed requests
+            app.priceCache.set(cacheKey, fallbackData);
+            return fallbackData;
+        }
+        
+        // Helper function to extract prices from Pricecharting HTML
+        function extractPricesFromHTML(doc, cardName, setName) {
+            const priceData = {
+                name: cardName,
+                set: setName,
+                prices: {
+                    ungraded: null,
+                    grade7: null,
+                    grade8: null,
+                    grade9: null,
+                    grade10: null
+                },
+                lastUpdated: new Date().toISOString(),
+                url: `https://www.pricecharting.com/search-products?q=${encodeURIComponent(cardName + ' ' + setName)}&type=prices`
+            };
+            
+            try {
+                // Look for price elements in the search results
+                const priceElements = doc.querySelectorAll('.price');
+                const productRows = doc.querySelectorAll('tr');
+                
+                // Try to find the most relevant card match
+                for (const row of productRows) {
+                    const nameElement = row.querySelector('.title a');
+                    if (nameElement) {
+                        const productName = nameElement.textContent.toLowerCase();
+                        
+                        // Check if this row matches our card
+                        if (productName.includes(cardName.toLowerCase()) && 
+                            (setName === '' || productName.includes(setName.toLowerCase()))) {
+                            
+                            // Extract prices from this row
+                            const priceElements = row.querySelectorAll('.price');
+                            if (priceElements.length > 0) {
+                                // Typically: ungraded, grade 7, grade 8, grade 9, grade 10
+                                priceData.prices.ungraded = parsePrice(priceElements[0]?.textContent);
+                                if (priceElements.length > 1) priceData.prices.grade7 = parsePrice(priceElements[1]?.textContent);
+                                if (priceElements.length > 2) priceData.prices.grade8 = parsePrice(priceElements[2]?.textContent);
+                                if (priceElements.length > 3) priceData.prices.grade9 = parsePrice(priceElements[3]?.textContent);
+                                if (priceElements.length > 4) priceData.prices.grade10 = parsePrice(priceElements[4]?.textContent);
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error parsing Pricecharting HTML:', error);
+            }
+            
+            return priceData;
+        }
+
+        // Parse price from Pricecharting format ($305.00 -> 305.00)
+        function parsePrice(priceString) {
+            if (!priceString) return null;
+            return parseFloat(priceString.replace(/[$,]/g, ''));
+        }
+
+        // Format price for display
+        function formatPrice(price) {
+            if (!price) return 'N/A';
+            return app.settings.currencySymbol + price.toFixed(2);
+        }
+
+        // Get market price for an item
+        async function getMarketPrice(item) {
+            const pricingData = await fetchPricechartingData(item.name, item.set);
+            if (!pricingData) return null;
+
+            // For single cards, determine which price to use based on condition
+            if (item.category === 'single-card') {
+                let marketPrice = null;
+                switch (item.condition) {
+                    case 'mint':
+                    case 'near-mint':
+                        marketPrice = pricingData.prices.ungraded;
+                        break;
+                    case 'lightly-played':
+                        marketPrice = pricingData.prices.grade7;
+                        break;
+                    case 'moderately-played':
+                        marketPrice = pricingData.prices.grade6;
+                        break;
+                    case 'heavily-played':
+                    case 'damaged':
+                        marketPrice = pricingData.prices.grade4;
+                        break;
+                    default:
+                        marketPrice = pricingData.prices.ungraded;
+                }
+                return marketPrice;
+            } else {
+                // For other product types (booster packs, boxes, etc.), use ungraded price
+                return pricingData.prices.ungraded;
+            }
+        }
+
+        // Add market price to items
+        async function addMarketPriceToItem(item) {            
+            try {
+                const pricingData = await fetchPricechartingData(item.name, item.set);
+                
+                if (pricingData.failed || pricingData.error) {
+                    // Handle failed price lookup
+                    return {
+                        ...item,
+                        marketPrice: null,
+                        marketPriceError: pricingData.error,
+                        marketPriceUpdated: new Date().toISOString()
+                    };
+                }
+                
+                const marketPrice = await getMarketPrice(item);
+                return {
+                    ...item,
+                    marketPrice: marketPrice,
+                    marketPriceError: null, // Clear any previous error
+                    marketPriceUpdated: new Date().toISOString()
+                };
+            } catch (error) {
+                console.error('Error adding market price:', error);
+                return {
+                    ...item,
+                    marketPrice: null,
+                    marketPriceError: 'Price lookup failed',
+                    marketPriceUpdated: new Date().toISOString()
+                };
+            }
+        }
+
+        // Update market price for a single item
+        async function updateSingleMarketPrice(itemId) {
+            const updateBtn = document.querySelector(`[onclick="updateSingleMarketPrice(${itemId})"]`);
+            if (updateBtn) {
+                updateBtn.disabled = true;
+                updateBtn.textContent = '⏳';
+            }
+
+            try {
+                const itemIndex = app.items.findIndex(item => item.id === itemId);
+                if (itemIndex === -1) return;
+
+                const item = app.items[itemIndex];
+                const updatedItem = await addMarketPriceToItem(item);
+                app.items[itemIndex] = updatedItem;
+
+                saveData();
+                updateDisplay();
+                
+            } catch (error) {
+                console.error('Error updating market price:', error);
+            } finally {
+                if (updateBtn) {
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = '🔄';
+                }
+            }
+        }
+
+        // Bulk update market prices
+        async function updateAllMarketPrices() {
+            const updateBtn = document.getElementById('updatePricesBtn');
+            if (updateBtn) {
+                updateBtn.disabled = true;
+            }
+
+            try {
+                const allItems = app.items.slice(); // Copy array to avoid modification during iteration
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (let i = 0; i < allItems.length; i++) {
+                    const item = allItems[i];
+                    
+                    // Update button text with progress
+                    if (updateBtn) {
+                        updateBtn.textContent = `Updating... ${i + 1}/${allItems.length}`;
+                    }
+                    
+                    const updatedItem = await addMarketPriceToItem(item);
+                    
+                    // Count successes and failures
+                    if (updatedItem.marketPrice && updatedItem.marketPrice > 0) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                    
+                    // Update the item in the main array
+                    const itemIndex = app.items.findIndex(appItem => appItem.id === item.id);
+                    if (itemIndex !== -1) {
+                        app.items[itemIndex] = updatedItem;
+                    }
+                    
+                    // Update display periodically to show progress
+                    if (i % 3 === 0) {
+                        updateDisplay();
+                    }
+                    
+                    // Add small delay to avoid overwhelming the service
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                saveData();
+                updateDisplay();
+                
+                // Show results summary
+                const message = successCount > 0 ? 
+                    `Updated ${successCount} items successfully` + (failCount > 0 ? `, ${failCount} items not found on Pricecharting` : '') :
+                    `No prices found. ${failCount} items not available on Pricecharting.`;
+                    
+                alert(message);
+                
+            } catch (error) {
+                console.error('Error updating market prices:', error);
+                alert('Error updating market prices. Please check your internet connection and try again.');
+            } finally {
+                if (updateBtn) {
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = '📈 Update Market Prices';
+                }
+            }
+        }
+
+        // Dark mode
+        function toggleDarkMode() {
+            app.settings.darkMode = !app.settings.darkMode;
+            saveSettings();
+            applyDarkMode();
+        }
+
+        function applyDarkMode() {
+            const toggle = document.querySelector('.dark-toggle');
+            if (app.settings.darkMode) {
+                document.body.classList.add('dark');
+                toggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark');
+                toggle.textContent = '🌙';
+            }
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'analytics') {
+                updateAnalytics();
+            }
+        }
+
+        // Data management
+        function loadData() {
+            const saved = localStorage.getItem('pokemonCollection');
+            app.items = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveData() {
+            localStorage.setItem('pokemonCollection', JSON.stringify(app.items));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('pokemonSettings');
+            if (saved) {
+                Object.assign(app.settings, JSON.parse(saved));
+                document.getElementById('defaultMargin').value = app.settings.defaultMargin;
+                document.getElementById('currencySymbol').value = app.settings.currencySymbol;
+            }
+        }
+
+        function saveSettings() {
+            app.settings.defaultMargin = parseInt(document.getElementById('defaultMargin').value);
+            app.settings.currencySymbol = document.getElementById('currencySymbol').value;
+            localStorage.setItem('pokemonSettings', JSON.stringify(app.settings));
+            alert('Settings saved!');
+        }
+
+        // Form functions
+        function toggleCategoryFields() {
+            const category = document.getElementById('category').value;
+            const cardNumberField = document.getElementById('cardNumberField');
+            const cardSpecificFields = document.getElementById('cardSpecificFields');
+            
+            if (category === 'single-card') {
+                cardNumberField.classList.add('show');
+                cardSpecificFields.classList.add('show');
+            } else {
+                cardNumberField.classList.remove('show');
+                cardSpecificFields.classList.remove('show');
+                document.getElementById('cardNumber').value = '';
+            }
+        }
+
+        function updateFormPreview() {
+            const price = parseFloat(document.getElementById('purchasePrice').value) || 0;
+            const qty = parseInt(document.getElementById('quantity').value) || 0;
+            const margin = parseFloat(document.getElementById('profitMargin').value) || 0;
+
+            if (price > 0 && qty > 0) {
+                const cost = price * qty;
+                const sellPrice = price * (1 + margin / 100);
+                const total = sellPrice * qty;
+
+                document.getElementById('previewCost').textContent = app.settings.currencySymbol + cost.toFixed(2);
+                document.getElementById('previewSellPrice').textContent = app.settings.currencySymbol + sellPrice.toFixed(2);
+                document.getElementById('previewTotal').textContent = app.settings.currencySymbol + total.toFixed(2);
+                document.getElementById('preview').classList.remove('hidden');
+            } else {
+                document.getElementById('preview').classList.add('hidden');
+            }
+
+            updateAddButton();
+        }
+
+        function updateAddButton() {
+            const name = document.getElementById('itemName').value.trim();
+            const price = parseFloat(document.getElementById('purchasePrice').value);
+            const qty = parseInt(document.getElementById('quantity').value);
+
+            document.getElementById('addBtn').disabled = !name || !price || !qty || price <= 0 || qty <= 0;
+        }
+
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const set = document.getElementById('itemSet').value.trim();
+            const price = parseFloat(document.getElementById('purchasePrice').value);
+            const qty = parseInt(document.getElementById('quantity').value);
+            const margin = parseFloat(document.getElementById('profitMargin').value);
+            const category = document.getElementById('category').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!name || !price || !qty || price <= 0 || qty <= 0) return;
+
+            const newItem = {
+                id: Date.now(),
+                name,
+                set,
+                purchasePrice: price,
+                quantity: qty,
+                profitMargin: margin,
+                category,
+                notes,
+                dateAdded: new Date().toISOString(),
+                sales: []
+            };
+
+            if (category === 'single-card') {
+                newItem.cardNumber = document.getElementById('cardNumber').value.trim();
+                newItem.rarity = document.getElementById('rarity').value;
+                newItem.condition = document.getElementById('condition').value;
+            }
+
+            app.items.push(newItem);
+            saveData();
+            clearForm();
+            updateDisplay();
+            alert('✅ ' + name + ' added to collection!');
+        }
+
+        function clearForm() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemSet').value = '';
+            document.getElementById('cardNumber').value = '';
+            document.getElementById('purchasePrice').value = '';
+            document.getElementById('quantity').value = '1';
+            document.getElementById('profitMargin').value = app.settings.defaultMargin;
+            document.getElementById('category').value = 'single-card';
+            document.getElementById('notes').value = '';
+            document.getElementById('preview').classList.add('hidden');
+            toggleCategoryFields();
+            updateAddButton();
+        }
+
+        // Item management
+        function deleteItem(id) {
+            if (confirm('Delete this item?')) {
+                app.items = app.items.filter(item => item.id !== id);
+                saveData();
+                updateDisplay();
+            }
+        }
+
+        function openSaleModal(id) {
+            app.selectedItem = app.items.find(item => item.id === id);
+            if (!app.selectedItem || app.selectedItem.quantity === 0) return;
+
+            document.getElementById('saleItemInfo').innerHTML = 
+                '<strong>' + app.selectedItem.name + '</strong><br>' +
+                'Available: ' + app.selectedItem.quantity + ' units<br>' +
+                'Cost: ' + app.settings.currencySymbol + app.selectedItem.purchasePrice.toFixed(2) + ' each';
+
+            document.getElementById('sellQuantity').value = '1';
+            document.getElementById('sellPrice').value = (app.selectedItem.purchasePrice * (1 + app.selectedItem.profitMargin / 100)).toFixed(2);
+            
+            document.getElementById('saleModal').classList.remove('hidden');
+            updateSalePreview();
+        }
+
+        function closeSaleModal() {
+            document.getElementById('saleModal').classList.add('hidden');
+            app.selectedItem = null;
+        }
+
+        function updateSalePreview() {
+            const qty = parseInt(document.getElementById('sellQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('sellPrice').value) || 0;
+
+            if (qty > 0 && price > 0 && app.selectedItem) {
+                const total = qty * price;
+                const profit = (price - app.selectedItem.purchasePrice) * qty;
+
+                document.getElementById('saleTotal').textContent = app.settings.currencySymbol + total.toFixed(2);
+                document.getElementById('saleProfit').textContent = app.settings.currencySymbol + profit.toFixed(2);
+                document.getElementById('salePreview').classList.remove('hidden');
+                
+                document.getElementById('confirmSaleBtn').disabled = qty > app.selectedItem.quantity;
+            } else {
+                document.getElementById('salePreview').classList.add('hidden');
+                document.getElementById('confirmSaleBtn').disabled = true;
+            }
+        }
+
+        function recordSale() {
+            if (!app.selectedItem) return;
+
+            const qty = parseInt(document.getElementById('sellQuantity').value);
+            const price = parseFloat(document.getElementById('sellPrice').value);
+
+            if (!qty || !price || qty > app.selectedItem.quantity) return;
+
+            const sale = {
+                id: Date.now(),
+                quantity: qty,
+                salePrice: price,
+                totalSale: price * qty,
+                totalProfit: (price - app.selectedItem.purchasePrice) * qty,
+                date: new Date().toISOString(),
+                dateString: new Date().toLocaleDateString()
+            };
+
+            app.selectedItem.quantity -= qty;
+            app.selectedItem.sales.push(sale);
+
+            saveData();
+            closeSaleModal();
+            updateDisplay();
+        }
+
+        // Market Price Modal functions
+        async function showMarketPrice(itemId) {
+            const item = app.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            // Disable the price button and show loading
+            const priceButton = document.querySelector(`[onclick="showMarketPrice(${itemId})"]`);
+            if (priceButton) {
+                priceButton.disabled = true;
+                priceButton.innerHTML = '⏳ Loading...';
+            }
+
+            // Show modal with loading state
+            document.getElementById('marketPriceModal').classList.remove('hidden');
+            document.getElementById('marketPriceContent').innerHTML = 
+                '<div style="text-align: center; padding: 40px;">' +
+                '<div style="font-size: 24px; margin-bottom: 10px;">⏳</div>' +
+                '<div>Loading market prices for ' + item.name + '...</div>' +
+                '<p style="font-size: 12px; color: #6b7280; margin-top: 15px;">This may take a few seconds</p>' +
+                '</div>';
+
+            try {
+                const priceData = await fetchPricechartingData(item.name, item.set);
+                displayMarketPriceData(item, priceData);
+            } catch (error) {
+                console.error('Error fetching market price:', error);
+                document.getElementById('marketPriceContent').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #ef4444;">' +
+                    '<div style="font-size: 24px; margin-bottom: 10px;">❌</div>' +
+                    '<div>Error loading market prices</div>' +
+                    '<p style="font-size: 12px; margin-top: 10px; color: #6b7280;">Network error or service unavailable. Please try again later.</p>' +
+                    '<button onclick="showMarketPrice(' + itemId + ')" class="btn btn-secondary" style="margin-top: 15px;">Retry</button>' +
+                    '</div>';
+            } finally {
+                // Re-enable the price button
+                if (priceButton) {
+                    priceButton.disabled = false;
+                    priceButton.innerHTML = '💰 Price';
+                }
+            }
+        }
+
+        function displayMarketPriceData(item, priceData) {
+            const content = document.getElementById('marketPriceContent');
+            
+            if (priceData.error) {
+                content.innerHTML = 
+                    '<div style="text-align: center; padding: 40px;">' +
+                    '<div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>' +
+                    '<div style="margin-bottom: 15px;">' + priceData.error + '</div>' +
+                    '<a href="' + priceData.url + '" target="_blank" class="btn btn-secondary">View on Pricecharting</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Check if we have any price data at all
+            const hasAnyPrice = Object.values(priceData.prices).some(price => price !== null);
+            if (!hasAnyPrice) {
+                content.innerHTML = 
+                    '<div style="text-align: center; padding: 40px;">' +
+                    '<div style="font-size: 24px; margin-bottom: 10px;">🔍</div>' +
+                    '<div style="margin-bottom: 15px;">No price data found for this card</div>' +
+                    '<p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Try searching manually on Pricecharting:</p>' +
+                    '<a href="' + priceData.url + '" target="_blank" class="btn btn-secondary">Search on Pricecharting</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Build price display
+            let priceHTML = '<div style="margin-bottom: 20px;">' +
+                '<div style="font-weight: 600; margin-bottom: 10px;">' + item.name + '</div>' +
+                '<div style="font-size: 14px; color: #6b7280; margin-bottom: 15px;">' + 
+                (item.set ? item.set + ' • ' : '') + 
+                (item.cardNumber ? '#' + item.cardNumber + ' • ' : '') +
+                item.condition.replace('-', ' ') + '</div>' +
+                '</div>';
+
+            // Determine which price is most relevant for this condition
+            let relevantPrice = null;
+            let priceLabel = '';
+            
+            switch (item.condition) {
+                case 'mint':
+                case 'near-mint':
+                    relevantPrice = priceData.prices.ungraded;
+                    priceLabel = 'Ungraded (NM)';
+                    break;
+                case 'lightly-played':
+                    relevantPrice = priceData.prices.grade7 || priceData.prices.ungraded;
+                    priceLabel = relevantPrice === priceData.prices.grade7 ? 'PSA 7 (LP)' : 'Ungraded (LP)';
+                    break;
+                case 'moderately-played':
+                    relevantPrice = priceData.prices.grade7 || priceData.prices.ungraded;
+                    priceLabel = 'Lower Grade (MP)';
+                    break;
+                case 'heavily-played':
+                case 'damaged':
+                    relevantPrice = priceData.prices.ungraded;
+                    priceLabel = 'Lower Grade (HP/D)';
+                    break;
+                default:
+                    relevantPrice = priceData.prices.ungraded;
+                    priceLabel = 'Ungraded';
+            }
+
+            if (relevantPrice) {
+                const comparison = relevantPrice - item.purchasePrice;
+                const comparisonColor = comparison >= 0 ? '#10b981' : '#ef4444';
+                const comparisonIcon = comparison >= 0 ? '📈' : '📉';
+                
+                priceHTML += '<div style="background: #f8fafc; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #e2e8f0;">' +
+                    '<div style="text-align: center;">' +
+                    '<div style="font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 5px;">' + formatPrice(relevantPrice) + '</div>' +
+                    '<div style="font-size: 14px; color: #6b7280; margin-bottom: 15px;">' + priceLabel + '</div>' +
+                    '<div style="font-size: 14px; color: ' + comparisonColor + '; font-weight: 600;">' +
+                    comparisonIcon + ' ' + (comparison >= 0 ? '+' : '') + formatPrice(comparison) + ' vs your cost' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            // Show all available prices
+            priceHTML += '<div style="margin-bottom: 20px;">' +
+                '<h4 style="font-size: 14px; font-weight: 600; margin-bottom: 15px;">All Market Prices</h4>' +
+                '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+
+            const priceCategories = [
+                { key: 'ungraded', label: 'Ungraded' },
+                { key: 'grade7', label: 'PSA 7' },
+                { key: 'grade8', label: 'PSA 8' },
+                { key: 'grade9', label: 'PSA 9' },
+                { key: 'grade10', label: 'PSA 10' }
+            ];
+
+            priceCategories.forEach(category => {
+                const price = priceData.prices[category.key];
+                priceHTML += '<div style="background: #f3f4f6; padding: 12px; border-radius: 8px; text-align: center;">' +
+                    '<div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">' + category.label + '</div>' +
+                    '<div style="font-weight: 600;">' + (price ? formatPrice(price) : 'N/A') + '</div>' +
+                    '</div>';
+            });
+
+            priceHTML += '</div></div>';
+
+            // Add footer with link and timestamp
+            priceHTML += '<div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px;">' +
+                '<div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">Updated: ' + new Date(priceData.lastUpdated).toLocaleDateString() + '</div>' +
+                '<a href="' + priceData.url + '" target="_blank" class="btn btn-secondary">View on Pricecharting</a>' +
+                '</div>';
+
+            content.innerHTML = priceHTML;
+        }
+
+        function closeMarketPriceModal() {
+            document.getElementById('marketPriceModal').classList.add('hidden');
+        }
+
+        // Manual Price Entry functions
+        let currentManualPriceItem = null;
+
+        function openManualPriceModal(itemId) {
+            const item = app.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            currentManualPriceItem = item;
+
+            // Set up the modal
+            document.getElementById('manualPriceItemInfo').innerHTML = 
+                '<strong>' + item.name + '</strong><br>' +
+                (item.set ? item.set + '<br>' : '') +
+                (item.cardNumber ? '#' + item.cardNumber + '<br>' : '') +
+                'Current price: ' + (item.marketPrice ? app.settings.currencySymbol + item.marketPrice.toFixed(2) : 'Not set');
+
+            // Set up the Pricecharting link
+            const searchQuery = `${item.name} ${item.set || ''}`.trim();
+            const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(searchQuery)}&type=prices`;
+            document.getElementById('pricechartingLink').href = pricechartingUrl;
+
+            // Pre-fill current price if it exists
+            document.getElementById('manualPrice').value = item.marketPrice || '';
+
+            // Show modal
+            document.getElementById('manualPriceModal').classList.remove('hidden');
+            document.getElementById('manualPrice').focus();
+        }
+
+        function closeManualPriceModal() {
+            document.getElementById('manualPriceModal').classList.add('hidden');
+            currentManualPriceItem = null;
+        }
+
+        function saveManualPrice() {
+            if (!currentManualPriceItem) return;
+
+            const price = parseFloat(document.getElementById('manualPrice').value);
+            if (isNaN(price) || price < 0) {
+                alert('Please enter a valid price');
+                return;
+            }
+
+            // Update the item with the manual price
+            const itemIndex = app.items.findIndex(item => item.id === currentManualPriceItem.id);
+            if (itemIndex !== -1) {
+                app.items[itemIndex] = {
+                    ...app.items[itemIndex],
+                    marketPrice: price,
+                    marketPriceError: null,
+                    marketPriceUpdated: new Date().toISOString(),
+                    marketPriceManual: true // Flag to indicate this was manually entered
+                };
+
+                saveData();
+                updateDisplay();
+                closeManualPriceModal();
+            }
+        }
+
+        // Display functions
+        function updateDisplay() {
+            updateSummary();
+            updateItemsList();
+        }
+
+        function updateSummary() {
+            if (app.items.length === 0) {
+                document.getElementById('summary').classList.add('hidden');
+                return;
+            }
+
+            const totalInvestment = app.items.reduce((sum, item) => 
+                sum + (item.purchasePrice * (item.quantity + item.sales.reduce((s, sale) => s + sale.quantity, 0))), 0);
+            const totalRevenue = app.items.reduce((sum, item) => 
+                sum + item.sales.reduce((saleSum, sale) => saleSum + sale.totalSale, 0), 0);
+            const realizedProfit = app.items.reduce((sum, item) => 
+                sum + item.sales.reduce((saleSum, sale) => saleSum + sale.totalProfit, 0), 0);
+            const inventoryValue = app.items.reduce((sum, item) => 
+                sum + (item.purchasePrice * item.quantity), 0);
+
+            document.getElementById('totalInvestment').textContent = app.settings.currencySymbol + totalInvestment.toFixed(2);
+            document.getElementById('totalRevenue').textContent = app.settings.currencySymbol + totalRevenue.toFixed(2);
+            document.getElementById('realizedProfit').textContent = app.settings.currencySymbol + realizedProfit.toFixed(2);
+            document.getElementById('inventoryValue').textContent = app.settings.currencySymbol + inventoryValue.toFixed(2);
+
+            document.getElementById('summary').classList.remove('hidden');
+        }
+
+        function updateItemsList() {
+            const container = document.getElementById('itemsList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            let filteredItems = app.items;
+            if (search) {
+                filteredItems = app.items.filter(item => 
+                    item.name.toLowerCase().includes(search) || 
+                    (item.set && item.set.toLowerCase().includes(search)) ||
+                    (item.cardNumber && item.cardNumber.toLowerCase().includes(search)));
+            }
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = '<div class="item" style="text-align: center; padding: 40px; color: #6b7280;"><h3>No items found</h3><p>Try adjusting your search or add some items!</p></div>';
+                return;
+            }
+
+            container.innerHTML = filteredItems.map(item => {
+                const invested = item.quantity * item.purchasePrice;
+                const sellPriceEach = item.purchasePrice * (1 + item.profitMargin / 100);
+                const realizedProfit = item.sales.reduce((sum, sale) => sum + sale.totalProfit, 0);
+
+                const itemIcon = item.category === 'single-card' ? '🎴' : 
+                               item.category === 'booster-pack' ? '📦' :
+                               item.category === 'booster-box' ? '📦📦' :
+                               item.category === 'elite-trainer-box' ? '🎯' :
+                               item.category === 'theme-deck' ? '🃏' :
+                               item.category === 'promo' ? '⭐' : '📱';
+
+                const rarityBadge = (item.rarity) ? 
+                    '<span style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-right: 8px; background: #3b82f6; color: white;">' + item.rarity.replace('-', ' ') + '</span>' : '';
+                
+                const conditionInfo = (item.condition) ? 
+                    '<span style="font-size: 12px; color: #6b7280;">' + item.condition.replace('-', ' ') + '</span>' : '';
+
+                const salesHistory = item.sales.length > 0 ? 
+                    '<div style="border-top: 1px solid #e5e7eb; padding-top: 15px; margin-top: 15px;">' +
+                    '<h4 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Sales History</h4>' +
+                    item.sales.map(sale => 
+                        '<div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-bottom: 5px;">' +
+                        '<span>Sold ' + sale.quantity + ' @ ' + app.settings.currencySymbol + sale.salePrice.toFixed(2) + ' on ' + sale.dateString + '</span>' +
+                        '<span style="color: #10b981; font-weight: 600;">+' + app.settings.currencySymbol + sale.totalProfit.toFixed(2) + '</span>' +
+                        '</div>'
+                    ).join('') + '</div>' : '';
+
+                return '<div class="item">' +
+                    '<div class="item-header">' +
+                        '<div>' +
+                            '<div class="item-name">' + itemIcon + ' ' + item.name + '</div>' +
+                            '<div class="item-details">' +
+                                (item.set ? item.set + ' • ' : '') + 
+                                (item.cardNumber ? '#' + item.cardNumber + ' • ' : '') + 
+                                item.quantity + ' in stock • ' + app.settings.currencySymbol + item.purchasePrice.toFixed(2) + ' each' +
+                            '</div>' +
+                            '<div style="margin-top: 8px;">' +
+                                rarityBadge + conditionInfo +
+                                '<span style="font-size: 12px; color: #6b7280; margin-left: 10px;">' + item.category.replace('-', ' ') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="item-buttons">' +
+                            '<button class="btn btn-small" onclick="showMarketPrice(' + item.id + ')">💰 Price</button>' +
+                            '<button class="btn btn-small" onclick="updateSingleMarketPrice(' + item.id + ')" title="Update Market Price">🔄</button>' +
+                            '<button class="btn btn-small" onclick="openManualPriceModal(' + item.id + ')" title="Enter Manual Price" style="background: #6b7280;">✏️</button>' +
+                            (item.quantity > 0 ? '<button class="btn btn-small btn-success" onclick="openSaleModal(' + item.id + ')">Sell</button>' : '') +
+                            '<button class="btn btn-small btn-danger" onclick="deleteItem(' + item.id + ')">×</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="item-stats">' +
+                        '<div class="stat"><div class="stat-label">Invested</div><div class="stat-value blue">' + app.settings.currencySymbol + invested.toFixed(2) + '</div></div>' +
+                        '<div class="stat"><div class="stat-label">Sell Price</div><div class="stat-value green">' + app.settings.currencySymbol + sellPriceEach.toFixed(2) + '</div></div>' +
+                        (item.marketPrice ? 
+                            '<div class="stat"><div class="stat-label">Market Price' + (item.marketPriceManual ? ' ✏️' : '') + '</div><div class="stat-value purple">' + app.settings.currencySymbol + item.marketPrice.toFixed(2) + '</div></div>' : 
+                            item.marketPriceError ? 
+                                '<div class="stat"><div class="stat-label">Market Price</div><div class="stat-value" style="color: #ef4444; font-size: 11px;" title="' + item.marketPriceError + ' - Click ✏️ to enter manually">Not found</div></div>' :
+                                '<div class="stat"><div class="stat-label">Market Price</div><div class="stat-value" style="color: #6b7280;">Not loaded</div></div>') +
+                        '<div class="stat"><div class="stat-label">Profit</div><div class="stat-value orange">' + app.settings.currencySymbol + realizedProfit.toFixed(2) + '</div></div>' +
+                    '</div>' +
+                    (item.notes ? '<div style="margin-top: 10px; font-size: 14px; color: #6b7280;"><strong>Notes:</strong> ' + item.notes + '</div>' : '') +
+                    salesHistory +
+                '</div>';
+            }).join('');
+        }
+
+        // Analytics functions
+        function updateAnalytics() {
+            updateAnalyticsSummary();
+            updateCategoryBreakdown();
+            updateTopPerformers();
+        }
+
+        function updateAnalyticsSummary() {
+            const categoryProfits = {};
+            app.items.forEach(item => {
+                const categoryProfit = item.sales.reduce((sum, sale) => sum + sale.totalProfit, 0);
+                categoryProfits[item.category] = (categoryProfits[item.category] || 0) + categoryProfit;
+            });
+            const bestCategory = Object.keys(categoryProfits).reduce((a, b) => 
+                categoryProfits[a] > categoryProfits[b] ? a : b, 'None');
+
+            const totalItems = app.items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalRevenue = app.items.reduce((sum, item) => 
+                sum + item.sales.reduce((saleSum, sale) => saleSum + sale.totalSale, 0), 0);
+            const totalCost = app.items.reduce((sum, item) => 
+                sum + item.sales.reduce((saleSum, sale) => saleSum + (sale.quantity * item.purchasePrice), 0), 0);
+            const avgMargin = totalRevenue > 0 ? ((totalRevenue - totalCost) / totalRevenue * 100) : 0;
+            const itemsSold = app.items.reduce((sum, item) => 
+                sum + item.sales.reduce((saleSum, sale) => saleSum + sale.quantity, 0), 0);
+
+            document.getElementById('bestCategory').textContent = bestCategory === 'None' ? '-' : bestCategory.replace('-', ' ');
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('avgMargin').textContent = avgMargin.toFixed(1) + '%';
+            document.getElementById('itemsSold').textContent = itemsSold;
+        }
+
+        function updateCategoryBreakdown() {
+            const container = document.getElementById('categoryBreakdown');
+            if (app.items.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">Add some items to see analytics</p>';
+                return;
+            }
+
+            const categoryStats = {};
+            app.items.forEach(item => {
+                if (!categoryStats[item.category]) {
+                    categoryStats[item.category] = { count: 0, totalValue: 0, totalProfit: 0 };
+                }
+                categoryStats[item.category].count += item.quantity;
+                categoryStats[item.category].totalValue += item.quantity * item.purchasePrice;
+                categoryStats[item.category].totalProfit += item.sales.reduce((sum, sale) => sum + sale.totalProfit, 0);
+            });
+
+            container.innerHTML = Object.keys(categoryStats).map(category => {
+                const stats = categoryStats[category];
+                const categoryIcon = category === 'single-card' ? '🎴' : 
+                                   category === 'booster-pack' ? '📦' :
+                                   category === 'booster-box' ? '📦📦' :
+                                   category === 'elite-trainer-box' ? '🎯' :
+                                   category === 'theme-deck' ? '🃏' :
+                                   category === 'promo' ? '⭐' : '📱';
+
+                return '<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">' +
+                    '<div><span style="font-size: 18px; margin-right: 10px;">' + categoryIcon + '</span><strong>' + category.replace('-', ' ') + '</strong><div style="font-size: 12px; color: #6b7280; margin-top: 5px;">' + stats.count + ' items</div></div>' +
+                    '<div style="text-align: right;"><div style="font-weight: 600; color: #3b82f6;">Value: ' + app.settings.currencySymbol + stats.totalValue.toFixed(2) + '</div><div style="font-size: 12px; color: #10b981;">Profit: ' + app.settings.currencySymbol + stats.totalProfit.toFixed(2) + '</div></div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function updateTopPerformers() {
+            const container = document.getElementById('topPerformers');
+            const itemsWithSales = app.items.filter(item => item.sales.length > 0);
+            
+            if (itemsWithSales.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">Record some sales to see top performers</p>';
+                return;
+            }
+
+            const sortedItems = itemsWithSales
+                .map(item => ({
+                    ...item,
+                    totalProfit: item.sales.reduce((sum, sale) => sum + sale.totalProfit, 0),
+                    totalSold: item.sales.reduce((sum, sale) => sum + sale.quantity, 0)
+                }))
+                .sort((a, b) => b.totalProfit - a.totalProfit);
+
+            container.innerHTML = sortedItems.slice(0, 5).map((item, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1) + '.';
+                return '<div style="display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; background: #f9fafb; border-radius: 8px;">' +
+                    '<span>' + medal + ' ' + item.name + ' (' + item.totalSold + ' sold)</span>' +
+                    '<span style="font-weight: 600; color: #10b981;">+' + app.settings.currencySymbol + item.totalProfit.toFixed(2) + '</span>' +
+                '</div>';
+            }).join('');
+        }
+
+        // Utility functions
+        function loadDemoData() {
+            if (confirm('Add demo items to your collection?')) {
+                const demoItems = [
+                    {
+                        id: Date.now() + 1,
+                        name: 'Charizard VMAX',
+                        set: 'Darkness Ablaze',
+                        cardNumber: '020/189',
+                        purchasePrice: 25.00,
+                        quantity: 3,
+                        profitMargin: 20,
+                        rarity: 'ultra-rare',
+                        condition: 'near-mint',
+                        category: 'single-card',
+                        notes: 'Popular card',
+                        dateAdded: new Date().toISOString(),
+                        sales: [{
+                            id: 1,
+                            quantity: 2,
+                            salePrice: 32.00,
+                            totalSale: 64.00,
+                            totalProfit: 14.00,
+                            date: new Date().toISOString(),
+                            dateString: new Date().toLocaleDateString()
+                        }]
+                    },
+                    {
+                        id: Date.now() + 2,
+                        name: 'Booster Box - Brilliant Stars',
+                        set: 'Brilliant Stars',
+                        purchasePrice: 120.00,
+                        quantity: 2,
+                        profitMargin: 25,
+                        category: 'booster-box',
+                        notes: 'Sealed product',
+                        dateAdded: new Date().toISOString(),
+                        sales: []
+                    }
+                ];
+
+                app.items.push(...demoItems);
+                saveData();
+                updateDisplay();
+                alert('Demo data loaded!');
+            }
+        }
+
+        function exportData() {
+            const data = {
+                items: app.items,
+                settings: app.settings,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pokemon-collection-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
